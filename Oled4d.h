@@ -1,5 +1,5 @@
 /*
-    Oled4d.cpp - Oled 4D System libray for Arduino
+    Oled4d.h - Oled 4D System libray for Arduino
     Copyright (c) 2009 Charles Rincheval.  All rights reserved.
 
     This library is free software; you can redistribute it and/or
