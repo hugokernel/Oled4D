@@ -47,34 +47,56 @@
 
 #define RGB(red, green, blue)   (((red * 31) / 255) << 11) | (((green * 63) / 255) << 5) | ((blue * 31) / 255)
 
-enum OLED4D_OP {
-    OP_UNKNOW                  = 0,
+// Command
+enum OLED4D_CMD {
+    CMD_UNKNOW                  = 0,
 
-    OP_DETECT_BAUDRATE         = 0x55,
+    CMD_DETECT_BAUDRATE         = 0x55,
 
-    OP_ADD_USER_BMP_CHAR       = 'A',
-    OP_SET_BG_COLOR            = 'B',
-    OP_PLACE_TEXT_BUTTON       = 'b',
-    OP_DRAW_CIRCLE             = 'C',
-    OP_BLOCK_COPY_PASTE        = 'c',
-    OP_DISPLAY_USER_BMP_CHAR   = 'D',
-    OP_ERASE_SCREEN            = 'E',
-    OP_FONT                    = 'F',
-    OP_DRAW_TRIANGLE           = 'G',
-    OP_DRAW_POLYGON            = 'g',
-    OP_DISPLAY_IMAGE           = 'I',
-    OP_DRAW_LINE               = 'L',
-    OP_OPAQUE_TRANSPARENT_TXT  = 'O',
-    OP_PUT_PIXEL               = 'P',
-    OP_SET_PEN_SIZE            = 'p',
-    OP_READ_PIXEL              = 'R',
-    OP_DRAW_RECTANGLE          = 'r',
-    OP_PLACE_STR_ASCII_TXT     = 'S',
-    OP_PLACE_STR_ASCII_TXT_F   = 's',
-    OP_PLACE_TEXT_CHAR         = 'T',
-    OP_PLACE_TEXT_CHAR_F       = 't',
-    OP_VERSION_DEVICE_INFO     = 'V',
-    OP_DISPLAY_CONTROL         = 'Y',
+    OLED4D_SEND_ADD_USER_BMP_CHAR       = 'A',
+    CMD_SET_BG_COLOR            = 'B',
+    CMD_PLACE_TEXT_BUTTON       = 'b',
+    CMD_DRAW_CIRCLE             = 'C',
+    CMD_BLOCK_COPY_PASTE        = 'c',
+    CMD_DISPLAY_USER_BMP_CHAR   = 'D',
+    CMD_ERASE_SCREEN            = 'E',
+    CMD_FONT                    = 'F',
+    CMD_DRAW_TRIANGLE           = 'G',
+    CMD_DRAW_POLYGON            = 'g',
+    CMD_DISPLAY_IMAGE           = 'I',
+    CMD_DRAW_LINE               = 'L',
+    CMD_OPAQUE_TRANSPARENT_TXT  = 'O',
+    CMD_PUT_PIXEL               = 'P',
+    CMD_SET_PEN_SIZE            = 'p',
+    CMD_READ_PIXEL              = 'R',
+    CMD_DRAW_RECTANGLE          = 'r',
+    CMD_PLACE_STR_ASCII_TXT     = 'S',
+    CMD_PLACE_STR_ASCII_TXT_F   = 's',
+    CMD_PLACE_TEXT_CHAR         = 'T',
+    CMD_PLACE_TEXT_CHAR_F       = 't',
+    CMD_VERSION_DEVICE_INFO     = 'V',
+    CMD_DISPLAY_CONTROL         = 'Y',
+
+    CMD_SPECIFIC_COMMAND        = '$',
+    CMD_EXTENDED_COMMAND        = '@',
+//};
+
+// Specific command
+//enum OLED4D_CMD_SPECIFIC {
+    CMD_S_SCROLL_CONTROL        = 'S',
+    CMD_S_DIM_SCREEN_AREA       = 'D',
+//};
+
+// Extended command
+//enum OLED4D_CMD_EXT {
+    CMD_E_INIT_SDCARD           = 'i',
+    CMD_E_READ_SECTOR           = '-',
+    CMD_E_WRITE_SECTOR          = '-',
+    CMD_E_READ_BYTE             = '-',
+    CMD_E_WRITE_BYTE            = '-',
+    CMD_E_SET_ADRESS            = '-',
+    CMD_E_COPY_SCREEN_TO_SD     = 'C',
+    CMD_E_DISPLAY_IMG_FROM_SD   = 'I',
 };
 
 typedef int             OLED4D_COLOR;
@@ -102,14 +124,21 @@ enum OLED4D_TEXTAPPEARANCE {
 };
 
 enum OLED4D_COLORMODE {
-    COLORMODE_256 = 0x08,
-    COLORMODE_65K = 0x10
+    COLORMODE_256 = 8,
+    COLORMODE_65K = 16
 };
 
 enum OLED4D_CONTROLDISPLAY {
     CONTROLDISPLAY_ON_OFF           = 1,
     CONTROLDISPLAY_SET_CONTRAST     = 2,
     CONTROLDISPLAY_POWERUP_SHUTDOWN = 3,
+};
+
+enum OLED4D_SCROLL_SPEED {
+    SCROLL_SPEED_NONE = 0,
+    SCROLL_SPEED_FAST,
+    SCROLL_SPEED_NORMAL,
+    SCROLL_SPEED_SLOW,
 };
 
 struct Oled4d_info {
@@ -138,7 +167,7 @@ public:
 #endif
 
     // System
-    char command(OLED4D_OP, char[], int, char*);
+    char command(OLED4D_CMD, char[], int, char*);
 
     bool getLastStatus();
     int debugStatus();
@@ -189,6 +218,15 @@ public:
 
     // Debug purpose...
     void sendUnknowOp();
+
+    // Specific command
+    void writeOledRegister();
+    void scrollScreen(OLED4D_SCROLL_SPEED);
+    void dimScreenArea(char, char, char, char); // Don't work...
+
+    // Extended command
+    void copyScreenToSD(char, char, char, char, char, char, char);
+    void displayImgFromSD(char, char, char, char, OLED4D_COLORMODE, char, char, char);
 };
 
 #define Oled4dHard Oled4d<HardwareSerial>
@@ -198,16 +236,11 @@ public:
 #endif
 
 //  Send opcode
-#define CMD(op)                     command(op, NULL, 0, NULL);
-#define CMD_C(op, param)            command(op, param, 1, NULL);
-#define CMD_I(op, param)            char _args[] = { SPLIT(param) }; command(op, _args, 2, NULL);
-#define CMD_A(op, param)            command(op, param, sizeof(param), NULL);
-#define CMD_A_S(op, param, size)    command(op, param, size, NULL);
-
-template <class T>
-void Oled4d<T>::sendUnknowOp() {
-    CMD(OP_UNKNOW);
-}
+#define OLED4D_SEND(op)                     command(op, NULL, 0, NULL);
+#define OLED4D_SEND_C(op, param)            command(op, param, 1, NULL);
+#define OLED4D_SEND_I(op, param)            char _args[] = { SPLIT(param) }; command(op, _args, 2, NULL);
+#define OLED4D_SEND_A(op, param)            command(op, param, sizeof(param), NULL);
+#define OLED4D_SEND_A_S(op, param, size)    command(op, param, size, NULL);
 
 template <class T>
 Oled4d<T>::Oled4d(HardwareSerial &serial, unsigned char reset_pin) :
@@ -228,6 +261,11 @@ Oled4d<T>::Oled4d(NewSoftSerial &serial, unsigned char reset_pin) :
 };
 
 template <class T>
+void Oled4d<T>::sendUnknowOp() {
+    OLED4D_SEND(CMD_UNKNOW);
+}
+
+template <class T>
 int Oled4d<T>::debugStatus()
 {
     return _last_status_code;
@@ -241,7 +279,7 @@ bool Oled4d<T>::getLastStatus()
 
 //  Send opcode with array and string
 template <class T>
-char Oled4d<T>::command(OLED4D_OP op, char args[], int narg, char * str)
+char Oled4d<T>::command(OLED4D_CMD op, char args[], int narg, char * str)
 {
     int i = 0;
 
@@ -282,7 +320,7 @@ void Oled4d<T>::init()
 
     delay(OLED4D_INIT_DELAY_MS);
 
-    CMD(OP_DETECT_BAUDRATE);
+    OLED4D_SEND(CMD_DETECT_BAUDRATE);
 }
 
 //  Get response from Oled screen
@@ -297,7 +335,7 @@ template <class T>
 void Oled4d<T>::displayControl(OLED4D_CONTROLDISPLAY control, char value)
 {
     char args[] = { control, value };
-    CMD_A(OP_DISPLAY_CONTROL, args);
+    OLED4D_SEND_A(CMD_DISPLAY_CONTROL, args);
 }
 
 // Get 16bits value from RGB (0 to 63, 565 format)
@@ -314,9 +352,9 @@ template <class T>
 void Oled4d<T>::getInfo(bool output, Oled4d_info &info)
 {
     char args[] = { (output ? OLED4D_OUTPUT_SERIAL_SCREEN : OLED4D_OUTPUT_SERIAL_ONLY) };
-    CMD_A(OP_VERSION_DEVICE_INFO, args);
+    OLED4D_SEND_A(CMD_VERSION_DEVICE_INFO, args);
 
-    _serial.print(OP_VERSION_DEVICE_INFO, BYTE);
+    _serial.print(CMD_VERSION_DEVICE_INFO, BYTE);
     _serial.print((output ? OLED4D_OUTPUT_SERIAL_SCREEN : OLED4D_OUTPUT_SERIAL_ONLY), BYTE);
 
     info.device_type = _serial.read();
@@ -329,27 +367,27 @@ void Oled4d<T>::getInfo(bool output, Oled4d_info &info)
 template <class T>
 void Oled4d<T>::setFont(OLED4D_FONT font)
 {
-    command(OP_FONT, font);
+    command(CMD_FONT, font);
 }
 
 template <class T>
 void Oled4d<T>::drawText(char column, char row, OLED4D_FONT font, OLED4D_COLOR color, char *text)
 {
     char args[] = { column, row, font, SPLIT(color) };
-    command(OP_PLACE_STR_ASCII_TXT_F, args, sizeof(args), text);
+    command(CMD_PLACE_STR_ASCII_TXT_F, args, sizeof(args), text);
 }
 
 template <class T>
 void Oled4d<T>::drawString(char str, char column, char row, OLED4D_COLOR color)
 {
     char args[] = { str, column, row, SPLIT(color) };
-    command(OP_PLACE_TEXT_CHAR, args, sizeof(args));
+    command(CMD_PLACE_TEXT_CHAR, args, sizeof(args));
 }
 
 template <class T>
 void Oled4d<T>::setTextAppearance(OLED4D_TEXTAPPEARANCE appearance)
 {
-    command(OP_OPAQUE_TRANSPARENT_TXT, appearance);
+    command(CMD_OPAQUE_TRANSPARENT_TXT, appearance);
 }
 
 template <class T>
@@ -358,7 +396,7 @@ void Oled4d<T>::textButton( OLED4D_BUTTONSTATE state, char x, char y, OLED4D_COL
                             OLED4D_COLOR text_color, char width, char height, char * text)
 {
     char args[] = { state, x, y, SPLIT(button_color), font, SPLIT(text_color), width, height };
-    command(OP_PLACE_TEXT_BUTTON, args, sizeof(args), text);
+    command(CMD_PLACE_TEXT_BUTTON, args, sizeof(args), text);
 }
 
 
@@ -367,14 +405,14 @@ template <class T>
 void Oled4d<T>::drawTriangle(char x1, char y1, char x2, char y2, char x3, char y3, OLED4D_COLOR color)
 {
     char args[] = { x1, y1, x2, y2, x3, y3, SPLIT(color) };
-    CMD_A(OP_DRAW_TRIANGLE, args);
+    OLED4D_SEND_A(CMD_DRAW_TRIANGLE, args);
 }
 
 template <class T>
 void Oled4d<T>::drawRectangle(char x1, char y1, char x2, char y2, OLED4D_COLOR color)
 {
     char args[] = { x1, y1, x2, y2, SPLIT(color) };
-    CMD_A(OP_DRAW_RECTANGLE, args);
+    OLED4D_SEND_A(CMD_DRAW_RECTANGLE, args);
 }
 
 template <class T>
@@ -398,7 +436,7 @@ void Oled4d<T>::drawPolygon(char count, char * coord, OLED4D_COLOR color)
     args[c + 1] = highByte(color);
     args[c + 2] = lowByte(color);
 
-    CMD_A_S(OP_DRAW_POLYGON, args, size + 3); 
+    OLED4D_SEND_A_S(CMD_DRAW_POLYGON, args, size + 3); 
 }
 
 template <class T>
@@ -406,7 +444,7 @@ char Oled4d<T>::displayImage(char x, char y, char width, char height, OLED4D_COL
 {
     unsigned int i, count = 0;
 
-    _serial.print(OP_DISPLAY_IMAGE, BYTE);
+    _serial.print(CMD_DISPLAY_IMAGE, BYTE);
 
     _serial.print(x, BYTE);
     _serial.print(y, BYTE);
@@ -431,28 +469,28 @@ char Oled4d<T>::displayImage(char x, char y, char width, char height, OLED4D_COL
 template <class T>
 void Oled4d<T>::setPenSize(OLED4D_PENSIZE pensize)
 {
-    command(OP_SET_PEN_SIZE, pensize);
+    command(CMD_SET_PEN_SIZE, pensize);
 }
 
 template <class T>
 void Oled4d<T>::screenCopyPaste(char xs, char ys, char xd, char yd, char width, char height)
 {
     char args[] = { xs, ys, xd, yd, width, height };
-    CMD_A(OP_BLOCK_COPY_PASTE, args);
+    OLED4D_SEND_A(CMD_BLOCK_COPY_PASTE, args);
 }
 
 template <class T>
 void Oled4d<T>::drawCircle(char x, char y, char radius, OLED4D_COLOR color)
 {
     char args[] = { x, y, radius, SPLIT(color) };
-    CMD_A(OP_DRAW_CIRCLE, args);
+    OLED4D_SEND_A(CMD_DRAW_CIRCLE, args);
 }
 
 template <class T>
 OLED4D_COLOR Oled4d<T>::readPixel(char x, char y)
 {
     OLED4D_COLOR color;
-    _serial.print(OP_READ_PIXEL, BYTE);
+    _serial.print(CMD_READ_PIXEL, BYTE);
     _serial.print(x, BYTE);
     _serial.print(y, BYTE);
 
@@ -477,7 +515,7 @@ void Oled4d<T>::addBmpChar(char index, char bitmap[])
         args[c + 1] = bitmap[c];
     }
 
-    CMD_A(OP_ADD_USER_BMP_CHAR, args);
+    OLED4D_SEND_A(OLED4D_SEND_ADD_USER_BMP_CHAR, args);
 }
 
 //  Display bitmap char from index
@@ -485,14 +523,14 @@ template <class T>
 void Oled4d<T>::displayBmpChar(char index, char x, char y, OLED4D_COLOR color)
 {
     char args[] = { index, x, y, SPLIT(color) };
-    CMD_A(OP_DISPLAY_USER_BMP_CHAR, args);
+    OLED4D_SEND_A(CMD_DISPLAY_USER_BMP_CHAR, args);
 }
 
 //  Clear screen
 template <class T>
 void Oled4d<T>::clear()
 {
-    CMD(OP_ERASE_SCREEN);
+    OLED4D_SEND(CMD_ERASE_SCREEN);
 }
 
 
@@ -500,7 +538,7 @@ template <class T>
 void Oled4d<T>::drawLine(char x1, char y1, char x2, char y2, OLED4D_COLOR color)
 {
     char args[] = { x1, y1, x2, y2, SPLIT(color) };
-    CMD_A(OP_DRAW_LINE, args);
+    OLED4D_SEND_A(CMD_DRAW_LINE, args);
 }
 
 
@@ -508,13 +546,50 @@ template <class T>
 void Oled4d<T>::putPixel(char x, char y, OLED4D_COLOR color)
 {
     char args[] = { x, y, SPLIT(color) };
-    CMD_A(OP_PUT_PIXEL, args);
+    OLED4D_SEND_A(CMD_PUT_PIXEL, args);
 }
 
 template <class T>
 void Oled4d<T>::setBG(int color)
 {
-    CMD_I(OP_SET_BG_COLOR, color)
+    OLED4D_SEND_I(CMD_SET_BG_COLOR, color)
+}
+
+template <class T>
+void Oled4d<T>::dimScreenArea(char column, char row, char width, char height) {
+    char args[] = { CMD_S_DIM_SCREEN_AREA, column, row, width, height };
+    OLED4D_SEND_A(CMD_SPECIFIC_COMMAND, args);
+}
+
+template <class T>
+void Oled4d<T>::scrollScreen(OLED4D_SCROLL_SPEED speed) {
+
+    char _nabled[] = { CMD_S_SCROLL_CONTROL, 0, 0 };
+    char scroll_speed[] = { CMD_S_SCROLL_CONTROL, 2, speed };
+
+    if (speed) {
+        _nabled[2] = 1;
+    }
+
+    OLED4D_SEND_A(CMD_SPECIFIC_COMMAND, _nabled);
+
+    if (speed) {
+        OLED4D_SEND_A(CMD_SPECIFIC_COMMAND, scroll_speed);
+    }
+}
+
+template <class T>
+void Oled4d<T>::copyScreenToSD(char x, char y, char width, char height, char sector0, char sector1, char sector2)
+{
+    char args[] = { CMD_E_COPY_SCREEN_TO_SD, x, y, width, height, sector0, sector1, sector2 };
+    OLED4D_SEND_A(CMD_EXTENDED_COMMAND, args);
+}
+
+template <class T>
+void Oled4d<T>::displayImgFromSD(char x, char y, char width, char height, OLED4D_COLORMODE color_mode, char sector0, char sector1, char sector2)
+{
+    char args[] = { CMD_E_DISPLAY_IMG_FROM_SD, x, y, width, height, color_mode, sector0, sector1, sector2 };
+    OLED4D_SEND_A(CMD_EXTENDED_COMMAND, args);
 }
 
 #endif
