@@ -1,0 +1,68 @@
+#######################################
+# Syntax Coloring Map for Oled4d
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Oled4dSoft      KEYWORD1
+Oled4dHard      KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+init    KEYWORD2
+reset    KEYWORD2
+getResponse    KEYWORD2
+
+displayControl    KEYWORD2
+displayOn    KEYWORD2
+displayOff    KEYWORD2
+displayPowerUp    KEYWORD2
+displayShutdown    KEYWORD2
+setContrast    KEYWORD2
+
+getInfo    KEYWORD2
+
+clear    KEYWORD2
+getRGB    KEYWORD2
+
+setFont    KEYWORD2
+drawText    KEYWORD2
+drawString    KEYWORD2
+setTextAppearance    KEYWORD2
+
+textButton    KEYWORD2
+
+setBG    KEYWORD2
+drawLine    KEYWORD2
+putPixel    KEYWORD2
+
+drawCircle    KEYWORD2
+drawTriangle    KEYWORD2
+setPenSize    KEYWORD2
+screenCopyPaste    KEYWORD2
+drawRectangle    KEYWORD2
+readPixel    KEYWORD2
+
+drawPolygon    KEYWORD2
+displayImage    KEYWORD2
+
+addBmpChar    KEYWORD2
+displayBmpChar    KEYWORD2
+
+sendUnknowOp    KEYWORD2
+
+writeOledRegister    KEYWORD2
+scrollScreen    KEYWORD2
+dimScreenArea    KEYWORD2
+
+copyScreenToSD    KEYWORD2
+displayImgFromSD    KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
