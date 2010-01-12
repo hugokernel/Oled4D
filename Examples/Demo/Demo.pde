@@ -125,7 +125,10 @@ void loop()
     
     // Efface l'écran
     oled.clear();
-    
+
+    // Fond d'écran bleu
+    oled.setBG(RGB(0, 0, 128));
+
     // Dessine un cercle
     oled.drawCircle(64, 64, 20, RGB(255, 255, 0));
     
