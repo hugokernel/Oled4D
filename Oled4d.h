@@ -53,7 +53,7 @@ enum OLED4D_CMD {
 
     CMD_DETECT_BAUDRATE         = 0x55,
 
-    OLED4D_SEND_ADD_USER_BMP_CHAR       = 'A',
+    CMD_ADD_USER_BMP_CHAR       = 'A',
     CMD_SET_BG_COLOR            = 'B',
     CMD_PLACE_TEXT_BUTTON       = 'b',
     CMD_DRAW_CIRCLE             = 'C',
@@ -64,6 +64,7 @@ enum OLED4D_CMD {
     CMD_DRAW_TRIANGLE           = 'G',
     CMD_DRAW_POLYGON            = 'g',
     CMD_DISPLAY_IMAGE           = 'I',
+    CMD_REPLACE_COLOR         = 'k',
     CMD_DRAW_LINE               = 'L',
     CMD_OPAQUE_TRANSPARENT_TXT  = 'O',
     CMD_PUT_PIXEL               = 'P',
@@ -211,6 +212,7 @@ public:
 
     void drawPolygon(char, char *, OLED4D_COLOR);
     char displayImage(char, char, char, char, OLED4D_COLORMODE, char *);
+    void replaceColor(char, char, char, char, OLED4D_COLOR, OLED4D_COLOR);
 
     // User bitmap
     void addBmpChar(char, char[]);
@@ -248,7 +250,7 @@ Oled4d<T>::Oled4d(HardwareSerial &serial, unsigned char reset_pin) :
     _reset_pin(reset_pin)
 {
     _last_status_code = 0;
-    pinMode(8, OUTPUT);
+    pinMode(reset_pin, OUTPUT);
 };
 
 template <class T>
@@ -257,7 +259,7 @@ Oled4d<T>::Oled4d(NewSoftSerial &serial, unsigned char reset_pin) :
     _reset_pin(reset_pin)
 {
     _last_status_code = 0;
-    pinMode(8, OUTPUT);
+    pinMode(reset_pin, OUTPUT);
 };
 
 template <class T>
@@ -367,7 +369,7 @@ void Oled4d<T>::getInfo(bool output, Oled4d_info &info)
 template <class T>
 void Oled4d<T>::setFont(OLED4D_FONT font)
 {
-    command(CMD_FONT, font);
+    OLED4D_SEND_I(CMD_FONT, font);
 }
 
 template <class T>
@@ -387,7 +389,7 @@ void Oled4d<T>::drawString(char str, char column, char row, OLED4D_COLOR color)
 template <class T>
 void Oled4d<T>::setTextAppearance(OLED4D_TEXTAPPEARANCE appearance)
 {
-    command(CMD_OPAQUE_TRANSPARENT_TXT, appearance);
+    OLED4D_SEND_I(CMD_OPAQUE_TRANSPARENT_TXT, appearance);
 }
 
 template <class T>
@@ -469,7 +471,7 @@ char Oled4d<T>::displayImage(char x, char y, char width, char height, OLED4D_COL
 template <class T>
 void Oled4d<T>::setPenSize(OLED4D_PENSIZE pensize)
 {
-    command(CMD_SET_PEN_SIZE, pensize);
+    OLED4D_SEND_I(CMD_SET_PEN_SIZE, pensize);
 }
 
 template <class T>
@@ -515,7 +517,7 @@ void Oled4d<T>::addBmpChar(char index, char bitmap[])
         args[c + 1] = bitmap[c];
     }
 
-    OLED4D_SEND_A(OLED4D_SEND_ADD_USER_BMP_CHAR, args);
+    OLED4D_SEND_A(CMD_ADD_USER_BMP_CHAR, args);
 }
 
 //  Display bitmap char from index
@@ -590,6 +592,13 @@ void Oled4d<T>::displayImgFromSD(char x, char y, char width, char height, OLED4D
 {
     char args[] = { CMD_E_DISPLAY_IMG_FROM_SD, x, y, width, height, color_mode, sector0, sector1, sector2 };
     OLED4D_SEND_A(CMD_EXTENDED_COMMAND, args);
+}
+
+template <class T>
+void Oled4d<T>::replaceColor(char x1, char y1, char x2, char y2, OLED4D_COLOR old_color, OLED4D_COLOR new_color)
+{
+    char args[] = { x1, y1, x2, y2, SPLIT(old_color), SPLIT(new_color) };
+    OLED4D_SEND_A(CMD_REPLACE_COLOR, args);
 }
 
 #endif
